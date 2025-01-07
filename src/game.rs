@@ -94,8 +94,10 @@ impl Game {
             let now = Instant::now();
             let timeout = Duration::from_secs_f64(1.0 / self.frame_rate);
 
-            while now.elapsed() < timeout {
-                if event::poll(timeout - now.elapsed())? {
+            while let elapsed = now.elapsed()
+                && elapsed < timeout
+            {
+                if event::poll(timeout - elapsed)? {
                     self.handle_events()?;
                 }
             }
