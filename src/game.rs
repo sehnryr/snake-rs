@@ -7,7 +7,6 @@ use ratatui::{
 };
 
 use crate::apple::Apple;
-use crate::point::Point;
 use crate::snake::Snake;
 use crate::{GRID_HEIGHT, GRID_WIDTH};
 
@@ -38,44 +37,13 @@ impl Default for Game {
 }
 
 impl Game {
-    fn new_apple(&mut self) -> Apple {
-        // Create a vector with all points of the snake
-        let mut snake = self.snake.body();
-
-        // Get a random position index minus the snake length
-        let snake_length = snake.len();
-        let possible_positions = GRID_WIDTH as usize * GRID_HEIGHT as usize - snake_length;
-        let mut i = fastrand::usize(1..possible_positions);
-
-        // Find the random point
-        let mut new_point = Point::new(0, 0);
-        'outer: for x in 0..GRID_WIDTH {
-            new_point.x = x;
-            for y in 0..GRID_HEIGHT {
-                new_point.y = y;
-
-                // If the point is on the snake, skip it and remove the point from the snake
-                if let Some(index) = snake.iter().position(|x| *x == &new_point) {
-                    snake.remove(index);
-                } else {
-                    i -= 1;
-                }
-
-                if i == 0 {
-                    break 'outer;
-                }
-            }
-        }
-
-        new_point.into()
-    }
-
     fn step(&mut self) {
         self.snake.step();
 
         if self.apple.position() == self.snake.head() {
             self.snake.grow();
-            self.apple = self.new_apple();
+
+            self.apple = Apple::new(self.snake.body());
         }
 
         if !self.snake.is_alive() {
