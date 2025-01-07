@@ -89,7 +89,13 @@ impl Game {
             while now.elapsed() < timeout {
                 if event::poll(timeout)? {
                     self.handle_events()?;
-                    timeout -= now.elapsed();
+
+                    let elapsed = now.elapsed();
+
+                    if timeout >= elapsed {
+                        timeout -= now.elapsed();
+                    }
+
                     now = Instant::now();
                 }
             }
