@@ -74,15 +74,23 @@ impl Game {
         new_point.into()
     }
 
+    fn step(&mut self) {
+        self.snake.step();
+
+        if self.apple.position() == self.snake.head() {
+            self.snake.grow();
+            self.apple = self.new_apple();
+        }
+
+        if !self.snake.is_alive() {
+            self.quit();
+        }
+    }
+
     pub fn run<B: Backend>(mut self, mut terminal: Terminal<B>) -> std::io::Result<()> {
+        terminal.draw(|frame| frame.render_widget(&self, frame.area()))?;
+
         while self.is_running() {
-            terminal.draw(|frame| frame.render_widget(&self, frame.area()))?;
-
-            if !self.snake.is_alive() {
-                self.quit();
-                break;
-            }
-
             let mut now = Instant::now();
             let mut timeout = Duration::from_secs_f64(1.0 / self.frame_rate);
 
@@ -100,12 +108,9 @@ impl Game {
                 }
             }
 
-            self.snake.step();
+            self.step();
 
-            if self.apple.position() == self.snake.head() {
-                self.snake.grow();
-                self.apple = self.new_apple();
-            }
+            terminal.draw(|frame| frame.render_widget(&self, frame.area()))?;
         }
         Ok(())
     }
