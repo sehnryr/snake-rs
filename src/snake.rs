@@ -69,7 +69,7 @@ impl Snake {
     }
 
     pub fn len(&self) -> usize {
-        self.tail().len() + 1
+        self.tail.len() + 1
     }
 
     pub fn is_alive(&self) -> bool {
