@@ -39,12 +39,8 @@ impl Default for Game {
 
 impl Game {
     fn new_apple(&mut self) -> Apple {
-        let head = vec![self.snake.head().to_owned()];
-        let tail = self.snake.tail().as_slices();
-        let tail = [tail.0, tail.1].concat();
-
         // Create a vector with all points of the snake
-        let mut snake = [head, tail].concat();
+        let mut snake = self.snake.body();
 
         // Get a random position index minus the snake length
         let snake_length = snake.len();
@@ -59,7 +55,7 @@ impl Game {
                 new_point.y = y;
 
                 // If the point is on the snake, skip it and remove the point from the snake
-                if let Some(index) = snake.iter().position(|x| x == &new_point) {
+                if let Some(index) = snake.iter().position(|x| *x == &new_point) {
                     snake.remove(index);
                 } else {
                     i -= 1;

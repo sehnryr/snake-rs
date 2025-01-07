@@ -59,8 +59,13 @@ impl Snake {
         &self.head
     }
 
-    pub fn tail(&self) -> &VecDeque<Point> {
-        &self.tail
+    pub fn tail(&self) -> Vec<&Point> {
+        let (slice1, slice2) = self.tail.as_slices();
+        [slice1.iter().collect::<Vec<_>>(), slice2.iter().collect()].concat()
+    }
+
+    pub fn body(&self) -> Vec<&Point> {
+        [vec![self.head()], self.tail()].concat()
     }
 
     pub fn len(&self) -> usize {
