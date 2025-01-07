@@ -87,6 +87,10 @@ impl Game {
         }
     }
 
+    fn score(&self) -> usize {
+        self.snake.len() - 3
+    }
+
     pub fn run<B: Backend>(mut self, mut terminal: Terminal<B>) -> std::io::Result<()> {
         terminal.draw(|frame| frame.render_widget(&self, frame.area()))?;
 
@@ -170,7 +174,7 @@ impl Game {
                         "Game Over",
                     );
 
-                    let score_text = format!("Score: {}", self.snake.len() - 3);
+                    let score_text = format!("Score: {}", self.score());
                     ctx.print(
                         ((GRID_WIDTH * 2 - 1) as f64 - score_text.len() as f64) / 2.0,
                         (GRID_HEIGHT - 1) as f64 / 2.0 - 1.0,
