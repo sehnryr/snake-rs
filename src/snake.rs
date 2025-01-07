@@ -22,6 +22,17 @@ enum Direction {
     Right,
 }
 
+impl Direction {
+    fn new_point(self, point: Point) -> Point {
+        match self {
+            Direction::Up => Point::new(point.x, point.y + 1),
+            Direction::Down => Point::new(point.x, point.y - 1),
+            Direction::Left => Point::new(point.x - 1, point.y),
+            Direction::Right => Point::new(point.x + 1, point.y),
+        }
+    }
+}
+
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
 enum SnakeStatus {
     #[default]
@@ -79,12 +90,7 @@ impl Snake {
             return;
         }
 
-        let new_head = match self.direction {
-            Direction::Up => Point::new(self.head.x, self.head.y + 1),
-            Direction::Down => Point::new(self.head.x, self.head.y - 1),
-            Direction::Left => Point::new(self.head.x - 1, self.head.y),
-            Direction::Right => Point::new(self.head.x + 1, self.head.y),
-        };
+        let new_head = self.direction.new_point(self.head);
 
         // Check if head collided with the tail
         if self.tail.contains(&new_head) {
@@ -104,18 +110,30 @@ impl Snake {
     }
 
     pub fn up(&mut self) {
+        if self.tail.front().unwrap() == &Direction::Up.new_point(self.head) {
+            return;
+        }
         self.direction = Direction::Up;
     }
 
     pub fn down(&mut self) {
+        if self.tail.front().unwrap() == &Direction::Down.new_point(self.head) {
+            return;
+        }
         self.direction = Direction::Down;
     }
 
     pub fn left(&mut self) {
+        if self.tail.front().unwrap() == &Direction::Left.new_point(self.head) {
+            return;
+        }
         self.direction = Direction::Left;
     }
 
     pub fn right(&mut self) {
+        if self.tail.front().unwrap() == &Direction::Right.new_point(self.head) {
+            return;
+        }
         self.direction = Direction::Right;
     }
 }
