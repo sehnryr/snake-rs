@@ -91,20 +91,12 @@ impl Game {
         terminal.draw(|frame| frame.render_widget(&self, frame.area()))?;
 
         while self.is_running() {
-            let mut now = Instant::now();
-            let mut timeout = Duration::from_secs_f64(1.0 / self.frame_rate);
+            let now = Instant::now();
+            let timeout = Duration::from_secs_f64(1.0 / self.frame_rate);
 
             while now.elapsed() < timeout {
-                if event::poll(timeout)? {
+                if event::poll(timeout - now.elapsed())? {
                     self.handle_events()?;
-
-                    let elapsed = now.elapsed();
-
-                    if timeout >= elapsed {
-                        timeout -= now.elapsed();
-                    }
-
-                    now = Instant::now();
                 }
             }
 
