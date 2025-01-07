@@ -49,7 +49,7 @@ impl Game {
         // Get a random position index minus the snake length
         let snake_length = snake.len();
         let possible_positions = GRID_WIDTH as usize * GRID_HEIGHT as usize - snake_length;
-        let mut i = fastrand::usize(..possible_positions);
+        let mut i = fastrand::usize(1..possible_positions);
 
         // Find the random point
         let mut new_point = Point::new(0, 0);
