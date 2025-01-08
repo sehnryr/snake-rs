@@ -7,7 +7,7 @@ use ratatui::{
 };
 
 use crate::apple::Apple;
-use crate::snake::Snake;
+use crate::snake::{Direction, Snake};
 use crate::{GRID_HEIGHT, GRID_WIDTH};
 
 #[derive(Debug, Clone)]
@@ -15,6 +15,7 @@ pub struct Game {
     frame_rate: f64,
     apple: Apple,
     snake: Snake,
+    direction: Direction,
     state: GameState,
 }
 
@@ -31,6 +32,7 @@ impl Default for Game {
             frame_rate: 10.0,
             apple: Apple::default(),
             snake: Snake::default(),
+            direction: Direction::default(),
             state: GameState::default(),
         }
     }
@@ -38,6 +40,7 @@ impl Default for Game {
 
 impl Game {
     fn step(&mut self) {
+        self.snake.turn(self.direction);
         self.snake.step();
 
         if self.apple.position() == self.snake.head() {
@@ -93,10 +96,10 @@ impl Game {
             }
             match key.code {
                 KeyCode::Char('q') | KeyCode::Esc => self.quit(),
-                KeyCode::Up => self.snake.up(),
-                KeyCode::Down => self.snake.down(),
-                KeyCode::Left => self.snake.left(),
-                KeyCode::Right => self.snake.right(),
+                KeyCode::Up => self.direction = Direction::Up,
+                KeyCode::Right => self.direction = Direction::Right,
+                KeyCode::Down => self.direction = Direction::Down,
+                KeyCode::Left => self.direction = Direction::Left,
                 _ => (),
             }
         }

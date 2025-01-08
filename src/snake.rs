@@ -14,9 +14,10 @@ pub struct Snake {
     status: SnakeStatus,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-enum Direction {
+#[derive(Default, Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Direction {
     Up = 1,
+    #[default]
     Right = 2,
     Down = 3,
     Left = 4,
@@ -37,7 +38,7 @@ impl Default for Snake {
         Self {
             head: Point::new(3, default_y),
             tail: VecDeque::from([Point::new(2, default_y), Point::new(1, default_y)]),
-            direction: Direction::Right,
+            direction: Direction::default(),
             status: SnakeStatus::default(),
         }
     }
@@ -109,29 +110,13 @@ impl Snake {
         self.head = new_head;
     }
 
-    fn turn(&mut self, direction: Direction) {
+    pub fn turn(&mut self, direction: Direction) {
         let d1 = self.direction as i32;
         let d2 = direction as i32;
 
         if (d1 - d2).abs() != 2 {
             self.direction = direction
         }
-    }
-
-    pub fn up(&mut self) {
-        self.turn(Direction::Up);
-    }
-
-    pub fn down(&mut self) {
-        self.turn(Direction::Down);
-    }
-
-    pub fn left(&mut self) {
-        self.turn(Direction::Left);
-    }
-
-    pub fn right(&mut self) {
-        self.turn(Direction::Right);
     }
 }
 
