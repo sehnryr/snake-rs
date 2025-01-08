@@ -61,13 +61,13 @@ impl Game {
         while self.is_running() {
             let now = Instant::now();
             let timeout = Duration::from_secs_f64(1.0 / self.frame_rate);
+            let mut elapsed = now.elapsed();
 
-            while let elapsed = now.elapsed()
-                && elapsed < timeout
-            {
+            while elapsed < timeout {
                 if event::poll(timeout - elapsed)? {
                     self.handle_events()?;
                 }
+                elapsed = now.elapsed();
             }
 
             self.step();

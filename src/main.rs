@@ -1,5 +1,3 @@
-#![feature(let_chains)]
-
 mod apple;
 mod game;
 mod point;
