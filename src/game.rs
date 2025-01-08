@@ -74,6 +74,11 @@ impl Game {
 
             terminal.draw(|frame| frame.render_widget(&self, frame.area()))?;
         }
+
+        // Reset terminal cursor at the end of viewport
+        let area = terminal.get_frame().area();
+        terminal.set_cursor_position((0, area.height + area.y))?;
+
         Ok(())
     }
 
