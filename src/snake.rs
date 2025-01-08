@@ -1,7 +1,9 @@
 use std::collections::VecDeque;
 
-use ratatui::style::Color;
-use ratatui::widgets::canvas::{Painter, Points, Shape};
+use ratatui::{
+    style::Color,
+    widgets::canvas::{Painter, Shape},
+};
 
 use crate::point::Point;
 use crate::{GRID_HEIGHT, GRID_WIDTH};
@@ -122,39 +124,9 @@ impl Snake {
 
 impl Shape for Snake {
     fn draw(&self, painter: &mut Painter) {
-        self.draw_head(painter);
-        self.draw_tail(painter);
-    }
-}
-
-impl Snake {
-    fn draw_head(&self, painter: &mut Painter) {
-        Points {
-            coords: &[
-                ((self.head.x * 2) as f64, self.head.y as f64),
-                ((self.head.x * 2 + 1) as f64, self.head.y as f64),
-            ],
-            color: Color::White,
-        }
-        .draw(painter);
-    }
-
-    fn draw_tail(&self, painter: &mut Painter) {
-        let tail_points: Vec<(f64, f64)> = self
-            .tail
+        self.head.draw(painter, Color::White);
+        self.tail
             .iter()
-            .flat_map(|point| {
-                [
-                    ((point.x * 2) as f64, point.y as f64),
-                    ((point.x * 2 + 1) as f64, point.y as f64),
-                ]
-            })
-            .collect();
-
-        Points {
-            coords: &tail_points,
-            color: Color::DarkGray,
-        }
-        .draw(painter);
+            .for_each(|point| point.draw(painter, Color::DarkGray));
     }
 }

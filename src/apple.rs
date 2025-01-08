@@ -1,5 +1,7 @@
-use ratatui::style::Color;
-use ratatui::widgets::canvas::{Painter, Points, Shape};
+use ratatui::{
+    style::Color,
+    widgets::canvas::{Painter, Shape},
+};
 
 use crate::point::Point;
 use crate::{GRID_HEIGHT, GRID_WIDTH};
@@ -58,13 +60,6 @@ impl From<Point> for Apple {
 
 impl Shape for Apple {
     fn draw(&self, painter: &mut Painter) {
-        Points {
-            coords: &[
-                ((self.0.x * 2) as f64, self.0.y as f64),
-                ((self.0.x * 2 + 1) as f64, self.0.y as f64),
-            ],
-            color: Color::Green,
-        }
-        .draw(painter);
+        self.0.draw(painter, Color::Green);
     }
 }
