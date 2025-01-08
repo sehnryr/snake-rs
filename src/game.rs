@@ -31,7 +31,11 @@ impl<const WIDTH: usize, const HEIGHT: usize> Default for Game<WIDTH, HEIGHT> {
         Self {
             frame_rate: 10.0,
             apple: Apple::default(),
-            snake: Snake::default(),
+            snake: Snake::new(
+                Point::new(3, (HEIGHT as f64 / 2.0) as isize),
+                2,
+                Direction::default(),
+            ),
             direction: Direction::default(),
             state: GameState::default(),
         }

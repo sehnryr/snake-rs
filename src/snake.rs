@@ -6,7 +6,6 @@ use ratatui::{
 };
 
 use crate::point::Point;
-use crate::GRID_HEIGHT;
 
 #[derive(Debug, Clone)]
 pub struct Snake {
@@ -25,24 +24,31 @@ pub enum Direction {
     Left = 4,
 }
 
-impl Default for Snake {
-    fn default() -> Self {
-        let default_y = (GRID_HEIGHT as f64 / 2.0) as isize;
+impl Snake {
+    pub fn new(head: Point, tail_length: usize, direction: Direction) -> Self {
+        let mut body = VecDeque::with_capacity(tail_length + 1);
+
+        body.push_front(head);
+
+        for i in 1..tail_length as isize + 1 {
+            #[rustfmt::skip]
+            let point = match direction {
+                Direction::Up =>    Point::new(head.x    , head.y - i),
+                Direction::Right => Point::new(head.x - i, head.y    ),
+                Direction::Down =>  Point::new(head.x    , head.y + i),
+                Direction::Left =>  Point::new(head.x + i, head.y    ),
+            };
+            body.push_back(point);
+        }
 
         Self {
-            body: VecDeque::from([
-                Point::new(3, default_y),
-                Point::new(2, default_y),
-                Point::new(1, default_y),
-            ]),
-            direction: Direction::default(),
+            body,
+            direction,
             is_growing: false,
             is_dead: false,
         }
     }
-}
 
-impl Snake {
     pub fn head(&self) -> &Point {
         self.body.front().unwrap()
     }
