@@ -3,14 +3,14 @@ use ratatui::{
     widgets::canvas::{Painter, Points, Shape},
 };
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct Point {
-    pub x: u16,
-    pub y: u16,
+    pub x: isize,
+    pub y: isize,
 }
 
 impl Point {
-    pub fn new(x: u16, y: u16) -> Self {
+    pub fn new(x: isize, y: isize) -> Self {
         Self { x, y }
     }
 }

@@ -12,8 +12,8 @@ pub struct Apple(Point);
 impl Default for Apple {
     fn default() -> Self {
         Self(Point::new(
-            (GRID_WIDTH as f64 * 3.0 / 4.0) as u16,
-            (GRID_HEIGHT as f64 / 2.0) as u16,
+            (GRID_WIDTH as f64 * 3.0 / 4.0) as isize,
+            (GRID_HEIGHT as f64 / 2.0) as isize,
         ))
     }
 }
@@ -26,9 +26,9 @@ impl Apple {
 
         // Find the random point
         let mut new_point = Point::new(0, 0);
-        'outer: for x in 0..GRID_WIDTH {
+        'outer: for x in 0..GRID_WIDTH as isize {
             new_point.x = x;
-            for y in 0..GRID_HEIGHT {
+            for y in 0..GRID_HEIGHT as isize {
                 new_point.y = y;
 
                 // If the point is on the snake, skip it and remove the point from the snake

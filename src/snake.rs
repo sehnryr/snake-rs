@@ -6,14 +6,14 @@ use ratatui::{
 };
 
 use crate::point::Point;
-use crate::{GRID_HEIGHT, GRID_WIDTH};
+use crate::GRID_HEIGHT;
 
 #[derive(Debug, Clone)]
 pub struct Snake {
-    head: Point,
-    tail: VecDeque<Point>,
+    body: VecDeque<Point>,
     direction: Direction,
-    status: SnakeStatus,
+    is_growing: bool,
+    is_dead: bool,
 }
 
 #[derive(Default, Debug, Clone, Copy, PartialEq, Eq)]
@@ -25,91 +25,69 @@ pub enum Direction {
     Left = 4,
 }
 
-#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
-enum SnakeStatus {
-    #[default]
-    None,
-    Growing,
-    Dead,
-}
-
 impl Default for Snake {
     fn default() -> Self {
-        let default_y = (GRID_HEIGHT as f64 / 2.0) as u16;
+        let default_y = (GRID_HEIGHT as f64 / 2.0) as isize;
 
         Self {
-            head: Point::new(3, default_y),
-            tail: VecDeque::from([Point::new(2, default_y), Point::new(1, default_y)]),
+            body: VecDeque::from([
+                Point::new(3, default_y),
+                Point::new(2, default_y),
+                Point::new(1, default_y),
+            ]),
             direction: Direction::default(),
-            status: SnakeStatus::default(),
+            is_growing: false,
+            is_dead: false,
         }
     }
 }
 
 impl Snake {
     pub fn head(&self) -> &Point {
-        &self.head
+        self.body.front().unwrap()
     }
 
-    pub fn tail(&self) -> Vec<&Point> {
-        let (slice1, slice2) = self.tail.as_slices();
-        [slice1.iter().collect::<Vec<_>>(), slice2.iter().collect()].concat()
-    }
-
-    pub fn body(&self) -> Vec<&Point> {
-        [vec![self.head()], self.tail()].concat()
+    pub fn body(&self) -> impl IntoIterator<Item = &Point> {
+        &self.body
     }
 
     pub fn len(&self) -> usize {
-        self.tail.len() + 1
+        self.body.len()
     }
 
-    pub fn is_alive(&self) -> bool {
-        self.status != SnakeStatus::Dead
+    pub fn direction(&self) -> Direction {
+        self.direction
     }
 
-    fn is_growing(&self) -> bool {
-        self.status == SnakeStatus::Growing
+    pub fn is_dead(&self) -> bool {
+        self.is_dead
     }
 
     pub fn grow(&mut self) {
-        self.status = SnakeStatus::Growing;
+        self.is_growing = true;
     }
 
     pub fn step(&mut self) {
-        // Check if head collided with a wall
-        if (self.head.x == 0 && self.direction == Direction::Left)
-            || (self.head.x == GRID_WIDTH - 1 && self.direction == Direction::Right)
-            || (self.head.y == 0 && self.direction == Direction::Down)
-            || (self.head.y == GRID_HEIGHT - 1 && self.direction == Direction::Up)
-        {
-            self.status = SnakeStatus::Dead;
-            return;
-        }
-
         #[rustfmt::skip]
         let new_head = match self.direction {
-            Direction::Up =>    Point::new(self.head.x    , self.head.y + 1),
-            Direction::Right => Point::new(self.head.x + 1, self.head.y    ),
-            Direction::Down =>  Point::new(self.head.x    , self.head.y - 1),
-            Direction::Left =>  Point::new(self.head.x - 1, self.head.y    ),
+            Direction::Up =>    Point::new(self.head().x    , self.head().y + 1),
+            Direction::Right => Point::new(self.head().x + 1, self.head().y    ),
+            Direction::Down =>  Point::new(self.head().x    , self.head().y - 1),
+            Direction::Left =>  Point::new(self.head().x - 1, self.head().y    ),
         };
 
-        // Check if head collided with the tail
-        if self.tail.contains(&new_head) {
-            self.status = SnakeStatus::Dead;
+        if self.body.iter().rev().skip(1).any(|p| p == &new_head) {
+            self.is_dead = true;
             return;
         }
 
-        self.tail.push_front(self.head);
+        self.body.push_front(new_head);
 
-        if !self.is_growing() {
-            self.tail.pop_back();
+        if self.is_growing {
+            self.is_growing = false;
         } else {
-            self.status = SnakeStatus::None;
+            self.body.pop_back();
         }
-
-        self.head = new_head;
     }
 
     pub fn turn(&mut self, direction: Direction) {
@@ -124,9 +102,10 @@ impl Snake {
 
 impl Shape for Snake {
     fn draw(&self, painter: &mut Painter) {
-        self.head.draw(painter, Color::White);
-        self.tail
+        self.body
             .iter()
-            .for_each(|point| point.draw(painter, Color::DarkGray));
+            .skip(1)
+            .for_each(|p| p.draw(painter, Color::DarkGray));
+        self.head().draw(painter, Color::White);
     }
 }

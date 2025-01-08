@@ -7,11 +7,11 @@ use ratatui::{
 };
 
 use crate::apple::Apple;
+use crate::point::Point;
 use crate::snake::{Direction, Snake};
-use crate::{GRID_HEIGHT, GRID_WIDTH};
 
 #[derive(Debug, Clone)]
-pub struct Game {
+pub struct Game<const WIDTH: usize, const HEIGHT: usize> {
     frame_rate: f64,
     apple: Apple,
     snake: Snake,
@@ -26,7 +26,7 @@ enum GameState {
     Quit,
 }
 
-impl Default for Game {
+impl<const WIDTH: usize, const HEIGHT: usize> Default for Game<WIDTH, HEIGHT> {
     fn default() -> Self {
         Self {
             frame_rate: 10.0,
@@ -38,24 +38,40 @@ impl Default for Game {
     }
 }
 
-impl Game {
+impl<const WIDTH: usize, const HEIGHT: usize> Game<WIDTH, HEIGHT> {
     fn step(&mut self) {
         self.snake.turn(self.direction);
+
+        if self.is_facing_bound(self.snake.head(), self.snake.direction()) {
+            self.quit();
+            return;
+        }
+
         self.snake.step();
+
+        if self.snake.is_dead() {
+            self.quit();
+            return;
+        }
 
         if self.apple.position() == self.snake.head() {
             self.snake.grow();
 
-            self.apple = Apple::new(self.snake.body());
-        }
-
-        if !self.snake.is_alive() {
-            self.quit();
+            self.apple = Apple::new(self.snake.body().into_iter().collect());
         }
     }
 
     fn score(&self) -> usize {
         self.snake.len() - 3
+    }
+
+    fn is_facing_bound(&self, point: &Point, direction: Direction) -> bool {
+        match direction {
+            Direction::Up => point.y == HEIGHT as isize - 1,
+            Direction::Right => point.x == WIDTH as isize - 1,
+            Direction::Down => point.y == 0,
+            Direction::Left => point.x == 0,
+        }
     }
 
     pub fn run<B: Backend>(mut self, mut terminal: Terminal<B>) -> std::io::Result<()> {
@@ -80,7 +96,7 @@ impl Game {
 
         // Reset terminal cursor at the end of viewport
         let area = terminal.get_frame().area();
-        terminal.set_cursor_position((0, area.height + area.y))?;
+        terminal.set_cursor_position((0, area.height + area.y + 1))?;
 
         Ok(())
     }
@@ -111,14 +127,16 @@ impl Game {
     }
 }
 
-impl Widget for &Game {
+impl<const WIDTH: usize, const HEIGHT: usize> Widget for &Game<WIDTH, HEIGHT> {
     fn render(self, area: Rect, buf: &mut Buffer)
     where
         Self: Sized,
     {
-        let [area, _] =
-            Layout::horizontal([Constraint::Length(GRID_WIDTH * 2 + 2), Constraint::Min(0)])
-                .areas(area);
+        let [area, _] = Layout::horizontal([
+            Constraint::Length((WIDTH * 2 + 2) as u16),
+            Constraint::Min(0),
+        ])
+        .areas(area);
 
         Block::bordered()
             .border_type(BorderType::Thick)
@@ -128,28 +146,28 @@ impl Widget for &Game {
     }
 }
 
-impl Game {
+impl<const WIDTH: usize, const HEIGHT: usize> Game<WIDTH, HEIGHT> {
     fn render_game(&self, area: Rect, buf: &mut Buffer) {
         Canvas::default()
-            .x_bounds([0.0, (GRID_WIDTH * 2 - 1) as f64])
-            .y_bounds([0.0, (GRID_HEIGHT - 1) as f64])
+            .x_bounds([0.0, (WIDTH * 2 - 1) as f64])
+            .y_bounds([0.0, (HEIGHT - 1) as f64])
             .marker(symbols::Marker::Block)
             .paint(|ctx| {
                 ctx.draw(&self.apple);
                 ctx.draw(&self.snake);
 
-                if !self.snake.is_alive() {
+                if !self.is_running() {
                     let game_over_text = "Game Over";
                     ctx.print(
-                        ((GRID_WIDTH * 2 - 1) as f64 - game_over_text.len() as f64) / 2.0,
-                        (GRID_HEIGHT - 1) as f64 / 2.0,
+                        ((WIDTH * 2 - 1) as f64 - game_over_text.len() as f64) / 2.0,
+                        (HEIGHT - 1) as f64 / 2.0,
                         "Game Over",
                     );
 
                     let score_text = format!("Score: {}", self.score());
                     ctx.print(
-                        ((GRID_WIDTH * 2 - 1) as f64 - score_text.len() as f64) / 2.0,
-                        (GRID_HEIGHT - 1) as f64 / 2.0 - 1.0,
+                        ((WIDTH * 2 - 1) as f64 - score_text.len() as f64) / 2.0,
+                        (HEIGHT - 1) as f64 / 2.0 - 1.0,
                         score_text,
                     );
                 }
