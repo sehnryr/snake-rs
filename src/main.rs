@@ -1,5 +1,6 @@
 mod apple;
 mod game;
+mod init;
 mod point;
 mod snake;
 
@@ -11,7 +12,7 @@ const GRID_HEIGHT: u16 = 15;
 const GRID_WIDTH: u16 = 17;
 
 fn main() -> std::io::Result<()> {
-    let terminal = ratatui::init_with_options(TerminalOptions {
+    let terminal = init::init_with_options(TerminalOptions {
         viewport: Viewport::Inline(GRID_HEIGHT + 2),
     });
 
@@ -19,6 +20,6 @@ fn main() -> std::io::Result<()> {
 
     let result = game.run(terminal);
 
-    ratatui::restore();
+    init::restore();
     result
 }
