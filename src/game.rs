@@ -28,15 +28,25 @@ enum GameState {
 
 impl<const WIDTH: usize, const HEIGHT: usize> Default for Game<WIDTH, HEIGHT> {
     fn default() -> Self {
+        let initial_direction = Direction::default();
+
+        let apple = Point::new(
+            (WIDTH as f64 * 3.0 / 4.0) as isize,
+            (HEIGHT as f64 / 2.0) as isize,
+        )
+        .into();
+
+        let snake = Snake::new(
+            Point::new(3, (HEIGHT as f64 / 2.0) as isize),
+            2,
+            initial_direction,
+        );
+
         Self {
             frame_rate: 10.0,
-            apple: Apple::default(),
-            snake: Snake::new(
-                Point::new(3, (HEIGHT as f64 / 2.0) as isize),
-                2,
-                Direction::default(),
-            ),
-            direction: Direction::default(),
+            apple,
+            snake,
+            direction: initial_direction,
             state: GameState::default(),
         }
     }
@@ -61,7 +71,7 @@ impl<const WIDTH: usize, const HEIGHT: usize> Game<WIDTH, HEIGHT> {
         if self.apple.position() == self.snake.head() {
             self.snake.grow();
 
-            self.apple = Apple::new(self.snake.body().into_iter().collect());
+            self.spawn_apple();
         }
     }
 
@@ -76,6 +86,36 @@ impl<const WIDTH: usize, const HEIGHT: usize> Game<WIDTH, HEIGHT> {
             Direction::Down => point.y == 0,
             Direction::Left => point.x == 0,
         }
+    }
+
+    fn spawn_apple(&mut self) {
+        let mut obstructions: Vec<&Point> = self.snake.body().into_iter().collect();
+
+        // Get a random position index minus obstructions count
+        let possible_positions = WIDTH * HEIGHT - obstructions.len();
+        let mut i = fastrand::usize(1..possible_positions);
+
+        // Find the random point
+        let mut new_point = Point::new(0, 0);
+        'outer: for x in 0..WIDTH as isize {
+            new_point.x = x;
+            for y in 0..HEIGHT as isize {
+                new_point.y = y;
+
+                // If the point is on the snake, skip it and remove the point from the snake
+                if let Some(index) = obstructions.iter().position(|x| *x == &new_point) {
+                    obstructions.remove(index);
+                } else {
+                    i -= 1;
+                }
+
+                if i == 0 {
+                    break 'outer;
+                }
+            }
+        }
+
+        self.apple = new_point.into();
     }
 
     pub fn run<B: Backend>(mut self, mut terminal: Terminal<B>) -> std::io::Result<()> {
