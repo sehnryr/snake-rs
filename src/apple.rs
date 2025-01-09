@@ -1,3 +1,4 @@
+#[cfg(feature = "tui")]
 use ratatui::{
     style::Color,
     widgets::canvas::{Painter, Shape},
@@ -20,6 +21,7 @@ impl From<Point> for Apple {
     }
 }
 
+#[cfg(feature = "tui")]
 impl Shape for Apple {
     fn draw(&self, painter: &mut Painter) {
         self.0.draw(painter, Color::Green);

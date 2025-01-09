@@ -1,3 +1,4 @@
+#[cfg(feature = "tui")]
 use ratatui::{
     style::Color,
     widgets::canvas::{Painter, Points, Shape},
@@ -15,6 +16,7 @@ impl Point {
     }
 }
 
+#[cfg(feature = "tui")]
 impl Point {
     pub fn draw(&self, painter: &mut Painter, color: Color) {
         Points {

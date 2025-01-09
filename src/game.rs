@@ -1,5 +1,7 @@
+#[cfg(feature = "tui")]
 use std::time::{Duration, Instant};
 
+#[cfg(feature = "tui")]
 use ratatui::{
     crossterm::event::{self, Event, KeyCode, KeyEventKind},
     prelude::*,
@@ -119,6 +121,7 @@ impl<const WIDTH: usize, const HEIGHT: usize> Game<WIDTH, HEIGHT> {
         self.apple = new_point.into();
     }
 
+    #[cfg(feature = "tui")]
     pub fn run<B: Backend>(mut self, mut terminal: Terminal<B>) -> std::io::Result<()> {
         terminal.draw(|frame| frame.render_widget(&self, frame.area()))?;
 
@@ -150,6 +153,7 @@ impl<const WIDTH: usize, const HEIGHT: usize> Game<WIDTH, HEIGHT> {
         self.state == GameState::Running
     }
 
+    #[cfg(feature = "tui")]
     #[rustfmt::skip]
     fn handle_events(&mut self) -> std::io::Result<()> {
         if let Event::Key(key) = event::read()? {
@@ -173,6 +177,7 @@ impl<const WIDTH: usize, const HEIGHT: usize> Game<WIDTH, HEIGHT> {
     }
 }
 
+#[cfg(feature = "tui")]
 impl<const WIDTH: usize, const HEIGHT: usize> Widget for &Game<WIDTH, HEIGHT> {
     fn render(self, area: Rect, buf: &mut Buffer)
     where
@@ -192,6 +197,7 @@ impl<const WIDTH: usize, const HEIGHT: usize> Widget for &Game<WIDTH, HEIGHT> {
     }
 }
 
+#[cfg(feature = "tui")]
 impl<const WIDTH: usize, const HEIGHT: usize> Game<WIDTH, HEIGHT> {
     fn render_game(&self, area: Rect, buf: &mut Buffer) {
         Canvas::default()

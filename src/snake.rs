@@ -1,5 +1,6 @@
 use std::collections::VecDeque;
 
+#[cfg(feature = "tui")]
 use ratatui::{
     style::Color,
     widgets::canvas::{Painter, Shape},
@@ -106,6 +107,7 @@ impl Snake {
     }
 }
 
+#[cfg(feature = "tui")]
 impl Shape for Snake {
     fn draw(&self, painter: &mut Painter) {
         self.body
