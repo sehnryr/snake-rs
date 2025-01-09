@@ -8,17 +8,24 @@ use ratatui::{
     widgets::{canvas::Canvas, Block, BorderType, Widget},
 };
 
+#[cfg(feature = "rl")]
+use rl::env::{DiscreteActionSpace, Environment, Report};
+use strum::VariantArray;
+
 use crate::apple::Apple;
 use crate::point::Point;
 use crate::snake::{Direction, Snake};
 
 #[derive(Debug, Clone)]
 pub struct Game<const WIDTH: usize, const HEIGHT: usize> {
+    #[cfg(feature = "tui")]
     frame_rate: f64,
     apple: Apple,
     snake: Snake,
     direction: Direction,
     state: GameState,
+    #[cfg(feature = "rl")]
+    pub report: Report,
 }
 
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
@@ -45,11 +52,14 @@ impl<const WIDTH: usize, const HEIGHT: usize> Default for Game<WIDTH, HEIGHT> {
         );
 
         Self {
+            #[cfg(feature = "tui")]
             frame_rate: 10.0,
             apple,
             snake,
             direction: initial_direction,
             state: GameState::default(),
+            #[cfg(feature = "rl")]
+            report: Report::new(vec!["score", "reward", "steps"]),
         }
     }
 }
@@ -77,6 +87,7 @@ impl<const WIDTH: usize, const HEIGHT: usize> Game<WIDTH, HEIGHT> {
         }
     }
 
+    #[cfg(feature = "tui")]
     fn score(&self) -> usize {
         self.snake.len() - 3
     }
@@ -225,5 +236,63 @@ impl<const WIDTH: usize, const HEIGHT: usize> Game<WIDTH, HEIGHT> {
                 }
             })
             .render(area, buf);
+    }
+}
+
+#[cfg(feature = "rl")]
+impl<const WIDTH: usize, const HEIGHT: usize> DiscreteActionSpace for Game<WIDTH, HEIGHT> {
+    fn actions(&self) -> Vec<Self::Action> {
+        Direction::VARIANTS.to_vec()
+    }
+}
+
+#[cfg(feature = "rl")]
+impl<const WIDTH: usize, const HEIGHT: usize> Environment for Game<WIDTH, HEIGHT> {
+    type State = [f32; 4];
+    type Action = Direction;
+
+    fn is_active(&self) -> bool {
+        self.is_running()
+    }
+
+    fn random_action(&self) -> Self::Action {
+        *fastrand::choice(self.actions().iter()).unwrap()
+    }
+
+    fn reset(&mut self) -> Self::State {
+        let default = Self::default();
+
+        self.apple = default.apple;
+        self.snake = default.snake;
+        self.direction = default.direction;
+
+        (self.apple, self.snake.clone())
+    }
+
+    fn step(&mut self, action: Self::Action) -> (Option<Self::State>, f32) {
+        self.report.entry("steps").and_modify(|x| *x += 1.0);
+        let mut reward = -0.01;
+
+        self.direction = action;
+        self.step();
+
+        if self.snake.is_growing() {
+            self.report.entry("score").and_modify(|x| *x += 1.0);
+            reward += 1.0;
+        }
+
+        let next_state = if self.is_active() {
+            Some((self.apple, self.snake.clone()))
+        } else {
+            reward += if self.snake.len() == WIDTH * HEIGHT {
+                1.0
+            } else {
+                -10.0
+            };
+            None
+        };
+
+        self.report.entry("reward").and_modify(|x| *x += reward);
+        (next_state, reward as f32)
     }
 }

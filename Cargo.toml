@@ -15,9 +15,19 @@ edition = "2021"
 publish = false
 
 [dependencies]
+burn = { version = "0.13.2", features = [
+    "autodiff",
+    "wgpu",
+    "ndarray",
+], optional = true }
 fastrand = "2.3.0"
 ratatui = { version = "0.29.0", optional = true }
+rl = { git = "https://github.com/sehnryr/rl.git", branch = "dep-fix", features = [
+    "viz",
+], optional = true }
+strum = "0.26.3"
 
 [features]
-default = ["tui"]
+default = ["rl"]
 tui = ["dep:ratatui"]
+rl = ["dep:burn", "dep:rl"]

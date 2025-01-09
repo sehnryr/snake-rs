@@ -1,10 +1,15 @@
 use std::collections::VecDeque;
 
+#[cfg(feature = "rl")]
+use burn::prelude::{Backend, Data, Int, Tensor};
 #[cfg(feature = "tui")]
 use ratatui::{
     style::Color,
     widgets::canvas::{Painter, Shape},
 };
+#[cfg(feature = "rl")]
+use rl::traits::ToTensor;
+use strum::{EnumIter, FromRepr, VariantArray};
 
 use crate::point::Point;
 
@@ -16,13 +21,32 @@ pub struct Snake {
     is_dead: bool,
 }
 
-#[derive(Default, Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(EnumIter, VariantArray, FromRepr, Default, Debug, Clone, Copy, Hash, PartialEq, Eq)]
 pub enum Direction {
     Up = 1,
     #[default]
     Right = 2,
     Down = 3,
     Left = 4,
+}
+
+#[cfg(feature = "rl")]
+impl From<usize> for Direction {
+    fn from(value: usize) -> Self {
+        Self::from_repr(value).expect("invalid value")
+    }
+}
+
+#[cfg(feature = "rl")]
+impl<B: Backend<IntElem = i32>> ToTensor<B, 2, Int> for Vec<Direction> {
+    fn to_tensor(self, device: &B::Device) -> Tensor<B, 2, Int> {
+        let len = self.len();
+        let data = Data::new(
+            self.into_iter().map(|x| x as i32).collect::<Vec<_>>(),
+            [len].into(),
+        );
+        Tensor::from_data(data, device).unsqueeze_dim(1)
+    }
 }
 
 impl Snake {
@@ -72,6 +96,11 @@ impl Snake {
 
     pub fn grow(&mut self) {
         self.is_growing = true;
+    }
+
+    #[cfg(feature = "rl")]
+    pub fn is_growing(&self) -> bool {
+        self.is_growing
     }
 
     pub fn step(&mut self) {
