@@ -79,12 +79,13 @@ impl<const WIDTH: usize, const HEIGHT: usize> Game<WIDTH, HEIGHT> {
         self.snake.len() - 3
     }
 
+    #[rustfmt::skip]
     fn is_facing_bound(&self, point: &Point, direction: Direction) -> bool {
         match direction {
-            Direction::Up => point.y == HEIGHT as isize - 1,
+            Direction::Up    => point.y == HEIGHT as isize - 1,
             Direction::Right => point.x == WIDTH as isize - 1,
-            Direction::Down => point.y == 0,
-            Direction::Left => point.x == 0,
+            Direction::Down  => point.y == 0,
+            Direction::Left  => point.x == 0,
         }
     }
 
@@ -149,6 +150,7 @@ impl<const WIDTH: usize, const HEIGHT: usize> Game<WIDTH, HEIGHT> {
         self.state == GameState::Running
     }
 
+    #[rustfmt::skip]
     fn handle_events(&mut self) -> std::io::Result<()> {
         if let Event::Key(key) = event::read()? {
             if key.kind != KeyEventKind::Press {
@@ -156,10 +158,10 @@ impl<const WIDTH: usize, const HEIGHT: usize> Game<WIDTH, HEIGHT> {
             }
             match key.code {
                 KeyCode::Char('q') | KeyCode::Esc => self.quit(),
-                KeyCode::Up => self.direction = Direction::Up,
+                KeyCode::Up    => self.direction = Direction::Up,
                 KeyCode::Right => self.direction = Direction::Right,
-                KeyCode::Down => self.direction = Direction::Down,
-                KeyCode::Left => self.direction = Direction::Left,
+                KeyCode::Down  => self.direction = Direction::Down,
+                KeyCode::Left  => self.direction = Direction::Left,
                 _ => (),
             }
         }
