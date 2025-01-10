@@ -87,13 +87,14 @@ fn main() -> std::io::Result<()> {
 
     let mut env = Game::<GRID_WIDTH, GRID_HEIGHT>::default();
 
-    let model = LinearQNetConfig::new(4, 256, 2).init::<DQNBackend>(&*DEVICE);
+    let model = LinearQNetConfig::new(5, 256, 2).init::<DQNBackend>(&*DEVICE);
     let config = DQNAgentConfig::default();
 
     let mut dqn = DQNAgent::new(model, config, &*DEVICE);
 
     for _ in 0..NUM_EPISODES {
         dqn.go(&mut env);
+        let _ = env.report.take();
     }
 
     init::restore();

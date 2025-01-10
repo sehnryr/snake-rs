@@ -94,15 +94,23 @@ impl<const WIDTH: usize, const HEIGHT: usize> Game<WIDTH, HEIGHT> {
     }
 
     #[cfg(feature = "rl")]
-    fn state(&mut self) -> [f32; 4] {
+    fn state(&mut self) -> [f32; 5] {
         let apple = self.apple.position();
         let snake_head = self.snake.head();
 
+        let apple_distance = (apple.x - snake_head.x).abs() + (apple.y - snake_head.y).abs();
+
+        let top_wall_distance = HEIGHT - snake_head.y as usize;
+        let right_wall_distance = WIDTH - snake_head.x as usize;
+        let bottom_wall_distance = snake_head.y as usize;
+        let left_wall_distance = snake_head.x;
+
         [
-            apple.x as f32,
-            apple.y as f32,
-            snake_head.x as f32,
-            snake_head.y as f32,
+            apple_distance as f32,
+            right_wall_distance as f32,
+            left_wall_distance as f32,
+            top_wall_distance as f32,
+            bottom_wall_distance as f32,
         ]
     }
 
@@ -297,7 +305,7 @@ impl<const WIDTH: usize, const HEIGHT: usize> DiscreteActionSpace for Game<WIDTH
 
 #[cfg(feature = "rl")]
 impl<const WIDTH: usize, const HEIGHT: usize> Environment for Game<WIDTH, HEIGHT> {
-    type State = [f32; 4];
+    type State = [f32; 5];
     type Action = Direction;
 
     fn is_active(&self) -> bool {
@@ -333,11 +341,11 @@ impl<const WIDTH: usize, const HEIGHT: usize> Environment for Game<WIDTH, HEIGHT
         let next_state = if self.is_active() {
             Some(self.state())
         } else {
-            reward += if self.snake.len() == WIDTH * HEIGHT {
-                1.0
-            } else {
-                -10.0
-            };
+            // reward += if self.snake.len() == WIDTH * HEIGHT {
+            //     1.0
+            // } else {
+            //     -10.0
+            // };
             None
         };
 
