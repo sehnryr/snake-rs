@@ -1,9 +1,14 @@
-#[cfg(feature = "tui")]
+#[cfg(all(feature = "tui", not(feature = "rl")))]
 use std::time::{Duration, Instant};
+
+#[cfg(all(feature = "tui", feature = "rl"))]
+use ratatui::widgets::WidgetRef;
+
+#[cfg(all(feature = "tui", not(feature = "rl")))]
+use ratatui::crossterm::event::{self, Event, KeyCode, KeyEventKind};
 
 #[cfg(feature = "tui")]
 use ratatui::{
-    crossterm::event::{self, Event, KeyCode, KeyEventKind},
     prelude::*,
     widgets::{canvas::Canvas, Block, BorderType, Widget},
 };
@@ -14,7 +19,10 @@ use crate::apple::Apple;
 use crate::point::Point;
 use crate::snake::{Direction, Snake};
 
-#[derive(Debug, Clone)]
+#[cfg(all(feature = "tui", feature = "rl"))]
+use crate::TERMINAL;
+
+#[derive(Debug)]
 pub struct Game<const WIDTH: usize, const HEIGHT: usize> {
     #[cfg(feature = "tui")]
     frame_rate: f64,
@@ -143,7 +151,20 @@ impl<const WIDTH: usize, const HEIGHT: usize> Game<WIDTH, HEIGHT> {
         self.apple = new_point.into();
     }
 
-    #[cfg(feature = "tui")]
+    #[cfg(all(feature = "tui", feature = "rl"))]
+    pub fn run(&mut self) -> std::io::Result<()> {
+        let mut terminal = TERMINAL.lock().unwrap();
+
+        terminal.draw(|frame| frame.render_widget(&self, frame.area()))?;
+
+        // Reset terminal cursor at the end of viewport
+        let area = terminal.get_frame().area();
+        terminal.set_cursor_position((0, area.height + area.y + 1))?;
+
+        Ok(())
+    }
+
+    #[cfg(all(feature = "tui", not(feature = "rl")))]
     pub fn run<B: Backend>(mut self, mut terminal: Terminal<B>) -> std::io::Result<()> {
         terminal.draw(|frame| frame.render_widget(&self, frame.area()))?;
 
@@ -175,7 +196,7 @@ impl<const WIDTH: usize, const HEIGHT: usize> Game<WIDTH, HEIGHT> {
         self.state == GameState::Running
     }
 
-    #[cfg(feature = "tui")]
+    #[cfg(all(feature = "tui", not(feature = "rl")))]
     #[rustfmt::skip]
     fn handle_events(&mut self) -> std::io::Result<()> {
         if let Event::Key(key) = event::read()? {
@@ -196,6 +217,23 @@ impl<const WIDTH: usize, const HEIGHT: usize> Game<WIDTH, HEIGHT> {
 
     fn quit(&mut self) {
         self.state = GameState::Quit;
+    }
+}
+
+#[cfg(all(feature = "tui", feature = "rl"))]
+impl<const WIDTH: usize, const HEIGHT: usize> WidgetRef for &mut Game<WIDTH, HEIGHT> {
+    fn render_ref(&self, area: Rect, buf: &mut Buffer) {
+        let [area, _] = Layout::horizontal([
+            Constraint::Length((WIDTH * 2 + 2) as u16),
+            Constraint::Min(0),
+        ])
+        .areas(area);
+
+        Block::bordered()
+            .border_type(BorderType::Thick)
+            .render(area, buf);
+
+        self.render_game(area.inner(Margin::new(1, 1)), buf);
     }
 }
 
@@ -302,6 +340,8 @@ impl<const WIDTH: usize, const HEIGHT: usize> Environment for Game<WIDTH, HEIGHT
             };
             None
         };
+
+        self.run().unwrap();
 
         self.report.entry("reward").and_modify(|x| *x += reward);
         (next_state, reward as f32)
