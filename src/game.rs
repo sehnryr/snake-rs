@@ -10,10 +10,13 @@ use ratatui::{
 
 use crate::apple::Apple;
 use crate::point::Point;
+#[cfg(feature = "rl")]
+use crate::rl::environment::Environment;
 use crate::snake::{Direction, Snake};
 
 #[derive(Debug, Clone)]
 pub struct Game<const WIDTH: usize, const HEIGHT: usize> {
+    #[cfg(feature = "tui")]
     frame_rate: f64,
     apple: Apple,
     snake: Snake,
@@ -45,6 +48,7 @@ impl<const WIDTH: usize, const HEIGHT: usize> Default for Game<WIDTH, HEIGHT> {
         );
 
         Self {
+            #[cfg(feature = "tui")]
             frame_rate: 10.0,
             apple,
             snake,
@@ -77,6 +81,20 @@ impl<const WIDTH: usize, const HEIGHT: usize> Game<WIDTH, HEIGHT> {
         }
     }
 
+    #[cfg(feature = "rl")]
+    fn state(&mut self) -> [f32; 4] {
+        let apple = self.apple.position();
+        let snake_head = self.snake.head();
+
+        [
+            apple.x as f32,
+            apple.y as f32,
+            snake_head.x as f32,
+            snake_head.y as f32,
+        ]
+    }
+
+    #[cfg(feature = "tui")]
     fn score(&self) -> usize {
         self.snake.len() - 3
     }
@@ -225,5 +243,57 @@ impl<const WIDTH: usize, const HEIGHT: usize> Game<WIDTH, HEIGHT> {
                 }
             })
             .render(area, buf);
+    }
+}
+
+#[cfg(feature = "rl")]
+impl<const WIDTH: usize, const HEIGHT: usize> Environment for Game<WIDTH, HEIGHT> {
+    type State = [f32; 4];
+    type Action = Direction;
+
+    fn is_active(&self) -> bool {
+        self.is_running()
+    }
+
+    fn actions(&self) -> Vec<Self::Action> {
+        Direction::VARIANTS.to_vec()
+    }
+
+    fn reset(&mut self) -> Self::State {
+        let default = Self::default();
+        self.apple = default.apple;
+        self.snake = default.snake;
+        self.direction = default.direction;
+        self.state = default.state;
+
+        self.state()
+    }
+
+    fn random_action(&self) -> Self::Action {
+        *fastrand::choice(self.actions().iter()).unwrap()
+    }
+
+    fn step(&mut self, action: Self::Action) -> (Option<Self::State>, f32) {
+        let mut reward = -0.01;
+
+        self.direction = action;
+        self.step();
+
+        if self.snake.is_growing() {
+            reward += 1.0;
+        }
+
+        let next_state = if self.is_active() {
+            Some(self.state())
+        } else {
+            reward += if self.snake.len() == WIDTH * HEIGHT {
+                1.0
+            } else {
+                -10.0
+            };
+            None
+        };
+
+        (next_state, reward as f32)
     }
 }

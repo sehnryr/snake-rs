@@ -18,11 +18,38 @@ pub struct Snake {
 
 #[derive(Default, Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Direction {
-    Up = 1,
+    Up = 0,
     #[default]
-    Right = 2,
-    Down = 3,
-    Left = 4,
+    Right = 1,
+    Down = 2,
+    Left = 3,
+}
+
+impl Direction {
+    pub const VARIANTS: [Direction; 4] = [
+        Direction::Up,
+        Direction::Right,
+        Direction::Down,
+        Direction::Left,
+    ];
+}
+
+impl Into<i32> for Direction {
+    fn into(self) -> i32 {
+        self as i32
+    }
+}
+
+impl From<i32> for Direction {
+    fn from(value: i32) -> Self {
+        match value {
+            0 => Direction::Up,
+            1 => Direction::Right,
+            2 => Direction::Down,
+            3 => Direction::Left,
+            _ => unreachable!(),
+        }
+    }
 }
 
 impl Snake {
@@ -72,6 +99,10 @@ impl Snake {
 
     pub fn grow(&mut self) {
         self.is_growing = true;
+    }
+
+    pub fn is_growing(&mut self) -> bool {
+        self.is_growing
     }
 
     pub fn step(&mut self) {
