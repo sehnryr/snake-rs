@@ -3077,6 +3077,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "rl"
+version = "0.4.0"
+source = "git+https://github.com/sehnryr/rl?branch=dev#16634d89f073ca3c19fb726a8397adbd6e175eda"
+dependencies = [
+ "burn",
+ "log",
+ "rand",
+ "rand_distr",
+]
+
+[[package]]
 name = "rmp"
 version = "0.8.14"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3396,9 +3407,9 @@ checksum = "3c5e1a9a646d36c3599cd173a41282daf47c44583ad367b8e6837255952e5c67"
 name = "snake"
 version = "0.1.0"
 dependencies = [
- "burn",
  "fastrand",
  "ratatui",
+ "rl",
 ]
 
 [[package]]

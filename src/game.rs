@@ -7,11 +7,11 @@ use ratatui::{
     prelude::*,
     widgets::{canvas::Canvas, Block, BorderType, Widget},
 };
+#[cfg(feature = "rl")]
+use rl::env::{DiscreteActionSpace, Environment, Report};
 
 use crate::apple::Apple;
 use crate::point::Point;
-#[cfg(feature = "rl")]
-use crate::rl::environment::Environment;
 use crate::snake::{Direction, Snake};
 
 #[derive(Debug, Clone)]
@@ -22,6 +22,8 @@ pub struct Game<const WIDTH: usize, const HEIGHT: usize> {
     snake: Snake,
     direction: Direction,
     state: GameState,
+    #[cfg(feature = "rl")]
+    pub report: Report,
 }
 
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
@@ -54,6 +56,8 @@ impl<const WIDTH: usize, const HEIGHT: usize> Default for Game<WIDTH, HEIGHT> {
             snake,
             direction: initial_direction,
             state: GameState::default(),
+            #[cfg(feature = "rl")]
+            report: Report::new(vec!["score", "reward", "steps"]),
         }
     }
 }
@@ -247,16 +251,19 @@ impl<const WIDTH: usize, const HEIGHT: usize> Game<WIDTH, HEIGHT> {
 }
 
 #[cfg(feature = "rl")]
+impl<const WIDTH: usize, const HEIGHT: usize> DiscreteActionSpace for Game<WIDTH, HEIGHT> {
+    fn actions(&self) -> Vec<Self::Action> {
+        Direction::VARIANTS.to_vec()
+    }
+}
+
+#[cfg(feature = "rl")]
 impl<const WIDTH: usize, const HEIGHT: usize> Environment for Game<WIDTH, HEIGHT> {
     type State = [f32; 4];
     type Action = Direction;
 
     fn is_active(&self) -> bool {
         self.is_running()
-    }
-
-    fn actions(&self) -> Vec<Self::Action> {
-        Direction::VARIANTS.to_vec()
     }
 
     fn reset(&mut self) -> Self::State {
@@ -274,12 +281,14 @@ impl<const WIDTH: usize, const HEIGHT: usize> Environment for Game<WIDTH, HEIGHT
     }
 
     fn step(&mut self, action: Self::Action) -> (Option<Self::State>, f32) {
+        self.report.entry("steps").and_modify(|x| *x += 1.0);
         let mut reward = -0.01;
 
         self.direction = action;
         self.step();
 
         if self.snake.is_growing() {
+            self.report.entry("score").and_modify(|x| *x += 1.0);
             reward += 1.0;
         }
 
@@ -294,6 +303,7 @@ impl<const WIDTH: usize, const HEIGHT: usize> Environment for Game<WIDTH, HEIGHT
             None
         };
 
+        self.report.entry("reward").and_modify(|x| *x += reward);
         (next_state, reward as f32)
     }
 }

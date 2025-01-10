@@ -2,9 +2,9 @@ mod apple;
 mod game;
 #[cfg(feature = "tui")]
 mod init;
-mod point;
 #[cfg(feature = "rl")]
-mod rl;
+mod model;
+mod point;
 mod snake;
 
 #[cfg(feature = "tui")]
@@ -33,40 +33,32 @@ fn main() -> std::io::Result<()> {
 
 #[cfg(feature = "rl")]
 fn main() {
-    #[cfg(feature = "ndarray")]
-    use burn::backend::{ndarray::NdArrayDevice, NdArray};
-    #[cfg(feature = "wgpu")]
-    use burn::backend::{wgpu::WgpuDevice, Wgpu};
+    use std::sync::LazyLock;
 
-    use burn::{backend::Autodiff, optim::AdamConfig};
+    use rl::burn::backend::{wgpu::WgpuDevice, Wgpu};
 
-    use crate::rl::{
-        dqn::{DQNConfig, DQN},
-        model::LinearQNetConfig,
-    };
+    use rl::algo::dqn::{DQNAgent, DQNAgentConfig};
+    use rl::burn::backend::Autodiff;
 
-    #[cfg(feature = "ndarray")]
-    type Backend = Autodiff<NdArray>;
-    #[cfg(feature = "wgpu")]
-    type Backend = Autodiff<Wgpu>;
+    use crate::model::LinearQNetConfig;
+
+    type DQNBackend = Autodiff<Wgpu>;
 
     const NUM_EPISODES: u16 = 256;
 
+    static DEVICE: LazyLock<WgpuDevice> = LazyLock::new(WgpuDevice::default);
+
     let mut env = Game::<GRID_WIDTH, GRID_HEIGHT>::default();
 
-    #[cfg(feature = "ndarray")]
-    let device = NdArrayDevice::default();
-    #[cfg(feature = "wgpu")]
-    let device = WgpuDevice::default();
+    let model = LinearQNetConfig::new(4, 256, 2).init::<DQNBackend>(&*DEVICE);
+    let config = DQNAgentConfig::default();
 
-    let model = LinearQNetConfig::new(4, 256, 2).init::<Backend>(&device);
-    let config = DQNConfig::new();
-    let optimizer = AdamConfig::new().with_epsilon(config.epsilon).init();
-
-    let mut dqn = DQN::new(config, model, optimizer, device);
+    let mut dqn = DQNAgent::new(model, config, &*DEVICE);
 
     for _ in 0..NUM_EPISODES {
         dqn.go(&mut env);
+        let report = env.report.take();
+        println!("{:?}", report);
     }
 }
 

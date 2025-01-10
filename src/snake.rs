@@ -5,6 +5,7 @@ use ratatui::{
     style::Color,
     widgets::canvas::{Painter, Shape},
 };
+use rl::burn::tensor::TensorData;
 
 use crate::point::Point;
 
@@ -34,14 +35,14 @@ impl Direction {
     ];
 }
 
-impl Into<i32> for Direction {
-    fn into(self) -> i32 {
-        self as i32
+impl Into<TensorData> for Direction {
+    fn into(self) -> TensorData {
+        TensorData::new(vec![self as u8], vec![1])
     }
 }
 
-impl From<i32> for Direction {
-    fn from(value: i32) -> Self {
+impl From<isize> for Direction {
+    fn from(value: isize) -> Self {
         match value {
             0 => Direction::Up,
             1 => Direction::Right,

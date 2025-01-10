@@ -4,6 +4,8 @@ use burn::{
     prelude::{Backend, Config, Module, Tensor},
     tensor::backend::AutodiffBackend,
 };
+use rl::algo::dqn::DQNModel;
+use rl::burn;
 
 #[derive(Module, Debug)]
 pub struct LinearQNet<B: Backend> {
@@ -29,15 +31,15 @@ impl LinearQNetConfig {
     }
 }
 
-impl<B: AutodiffBackend> LinearQNet<B> {
-    pub fn forward(&self, input: Tensor<B, 2>) -> Tensor<B, 2> {
+impl<B: AutodiffBackend> DQNModel<B, 2> for LinearQNet<B> {
+    fn forward(&self, input: Tensor<B, 2>) -> Tensor<B, 2> {
         let x = self.linear1.forward(input);
         let x = self.activation.forward(x);
 
         self.linear2.forward(x)
     }
 
-    pub fn soft_update(self, other: &Self, tau: f32) -> Self {
+    fn soft_update(self, other: &Self, tau: f32) -> Self {
         Self {
             linear1: soft_update_linear(self.linear1, &other.linear1, tau),
             linear2: soft_update_linear(self.linear2, &other.linear2, tau),
