@@ -24,7 +24,7 @@ use crate::TERMINAL;
 
 #[derive(Debug)]
 pub struct Game<const WIDTH: usize, const HEIGHT: usize> {
-    #[cfg(feature = "tui")]
+    #[cfg(all(feature = "tui", not(feature = "rl")))]
     frame_rate: f64,
     apple: Apple,
     snake: Snake,
@@ -58,7 +58,7 @@ impl<const WIDTH: usize, const HEIGHT: usize> Default for Game<WIDTH, HEIGHT> {
         );
 
         Self {
-            #[cfg(feature = "tui")]
+            #[cfg(all(feature = "tui", not(feature = "rl")))]
             frame_rate: 10.0,
             apple,
             snake,
